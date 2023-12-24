@@ -1,0 +1,7 @@
+.DS_Store
+data/
+
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata

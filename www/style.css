@@ -1,0 +1,174 @@
+/* FONTS */
+
+@import url('https://fonts.googleapis.com/css2?family=Cabin+Sketch:wght@400;700&family=Cabin:wght@400;500;600;700&display=swap');
+
+/* MAIN */
+
+body {
+  font-family: 'Cabin', arial, sans-serif;
+  font-weight: 400;
+  font-style: normal;
+  background-color: #ddd;
+}
+
+strong {
+  font-family: 'Cabin', arial, sans-serif;
+  font-weight: 700;
+  font-style: normal;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Cabin', arial, sans-serif;
+  font-weight: 500;
+  font-style: normal;
+}
+
+.grid_parent {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+}
+
+#grid_container {
+  display: grid;
+  grid-template-columns: repeat(92, 12px);
+  grid-template-rows: repeat(53, 12px);
+  grid-gap: 3.5px;
+  grid-auto-flow: column;
+}
+
+.grid_item {
+  width: 12px;
+  height: 12px;
+  background-color: #fff;
+  border: 1.5px solid #000;
+  border-radius: 2.5px;
+}
+
+.filled:hover {
+  cursor: pointer;
+}
+
+.black {
+  background-color: black !important;
+  border-color: black !important;
+}
+
+.red {
+  background-color: firebrick !important;
+  border-color: firebrick !important;
+}
+
+.orange {
+  background-color: lightsalmon !important;
+  border-color: lightsalmon !important;
+}
+
+.yellow {
+  background-color: gold !important;
+  border-color: gold !important;
+}
+
+.green {
+  background-color: forestgreen !important;
+  border-color: forestgreen !important;
+}
+
+.blue {
+  background-color: royalblue !important;
+  border-color: royalblue !important;
+}
+
+.purple {
+  background-color: slateblue !important;
+  border-color: slateblue !important;
+}
+
+.brown {
+  background-color: rosybrown !important;
+  border-color: rosybrown !important;
+}
+
+input[type='radio'][value='black'] {
+  background-color: black !important;
+  border: 2px solid black !important;
+}
+
+input[type='radio'][value='red'] {
+  background-color: firebrick !important;
+  border: 2px solid firebrick !important;
+}
+
+input[type='radio'][value='orange'] {
+  background-color: lightsalmon !important;
+  border: 2px solid lightsalmon !important;
+}
+
+input[type='radio'][value='yellow'] {
+  background-color: gold !important;
+  border: 2px solid gold !important;
+}
+
+input[type='radio'][value='green'] {
+  background-color: forestgreen !important;
+  border: 2px solid forestgreen !important;
+}
+
+input[type='radio'][value='blue'] {
+  background-color: royalblue !important;
+  border: 2px solid royalblue !important;
+}
+
+input[type='radio'][value='purple'] {
+  background-color: slateblue !important;
+  border: 2px solid slateblue !important;
+}
+
+input[type='radio'][value='brown'] {
+  background-color: rosybrown !important;
+  border: 2px solid rosybrown !important;
+}
+
+.grid_label_week {
+  width: 12px;
+  height: 12px;
+  background-color: #fff;
+  border: 1.5px solid #fff;
+  border-radius: 2.5px;
+  font-size: 8px;
+  line-height: 8px;
+  text-align: right;
+}
+
+.grid_label_year {
+  width: 12px;
+  height: 12px;
+  background-color: #fff;
+  border: 1.5px solid #fff;
+  border-radius: 2.5px;
+  font-size: 8px;
+  line-height: 12px;
+  text-align: center;
+}
+
+.grid_none {
+  width: 12px;
+  height: 12px;
+  background-color: #fff;
+  border: 1.5px solid #fff;
+  border-radius: 2.5px;
+  font-size: 8px;
+  line-height: 8px;
+}
+
+#dob_div {
+  width: 300px;
+  margin: 0 auto;
+}
+
+.custom_dropdown {
+  padding: 20px;
+  font-size: 14px;
+  box-shadow: 0 1px 10px #00000020;
+}

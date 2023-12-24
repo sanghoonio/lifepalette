@@ -1,0 +1,1 @@
+icons <- fontawesome:::fa_tbl
