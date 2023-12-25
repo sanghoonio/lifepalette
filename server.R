@@ -221,9 +221,9 @@ server <- function(input, output, session) {
       )
     }
     
-    weeks_diff <- ((difftime(Sys.Date(), dob, units = 'weeks') * .9972594543) %>% floor())
+    weeks_diff <- ((difftime(Sys.Date(), dob, units = 'weeks') * 52*7/365.25) %>% floor())
     box_classes <- lapply(1:(52*90), function(week) {
-      ifelse((week < weeks_diff), paste0('grid_item filled ', render_colors()[week, 1]), 'grid_item')
+      ifelse((week <= weeks_diff), paste0('grid_item filled ', render_colors()[week, 1]), 'grid_item')
     })
     js$fillBoxes(box_classes)
   }, ignoreInit = TRUE)
