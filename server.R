@@ -183,11 +183,11 @@ server <- function(input, output, session) {
     } else {
       insertUI(selector = '#login_div',
                where = 'beforeEnd',
-               actionButton(style = 'margin-right:10px; width:CALC(50% - 5px);', class = 'btn btn-light', 'register_modal', 'Register')
+               actionButton(style = 'margin-right:10px; width:calc(50% - 5px);', class = 'btn btn-light', 'register_modal', 'Register')
       )
       insertUI(selector = '#login_div',
                where = 'beforeEnd',
-               actionButton(style = 'width:CALC(50% - 5px); ', class = 'btn btn-light', 'signin_modal', 'Sign In')
+               actionButton(style = 'width:calc(50% - 5px); ', class = 'btn btn-light', 'signin_modal', 'Sign In')
       )
       removeUI(selector = '#sign_out')
     }

@@ -68,9 +68,12 @@ ui <- fluidPage(
           div(
             id = 'boxes_div',
             div(
-              id = 'x_label',
-              style = 'margin:0 0 6px 0; padding:40px 0 0 0; font-size:11px;',
+              class = 'x_label wide_label',
               span('years', HTML('&nbsp;'), icon('arrow-right-long')),
+            ),
+            div(
+              class = 'x_label tall_label',
+              span('weeks', HTML('&nbsp;'), icon('arrow-right-long')),
             ),
             
             ### boxes ----
@@ -78,9 +81,12 @@ ui <- fluidPage(
               class = 'grid_parent',
               
               div(
-                id = 'y_label',
-                style = 'writing-mode:vertical-rl; transform:scale(-1); margin:0 6px 0 0; padding:0; font-size:11px;',
+                class = 'y_label wide_label',
                 span(icon('arrow-up-long'), HTML('&nbsp;'), 'weeks'),
+              ),
+              div(
+                class = 'y_label tall_label',
+                span(icon('arrow-up-long'), HTML('&nbsp;'), 'years'),
               ),
               
               div(
@@ -104,9 +110,9 @@ ui <- fluidPage(
               ),
               
               div(
-                id = 'y_label',
-                style = 'writing-mode:vertical-rl; transform:scale(-1); margin:0 0 0 6px; padding:0; font-size:11px; visibility:hidden;',
-                span(icon('arrow-up-long'), HTML('&nbsp;'), 'weeks'),
+                class = 'y_label',
+                style = 'visibility:hidden;',
+                span(icon('arrow-up-long')),
               )
             )
           ),
