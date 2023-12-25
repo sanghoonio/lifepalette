@@ -12,6 +12,7 @@ ui <- fluidPage(
   theme = bs_theme(version = 5),
   
   tags$script(src = 'script.js'),
+  extendShinyjs(script = 'script.js', functions = c('fillBoxes', 'fillBox')),
   
   tags$head(
     tags$title('LifePalette'),
@@ -37,14 +38,14 @@ ui <- fluidPage(
         `aria-labeled-by` = 'settings_dropdown',
         
         uiOutput(outputId = 'user'),
-        div(id = 'login_div')
+        div(id = 'login_div')      
       )
     )
   ),
   
   div(
     class = 'row',
-    style = 'background-color:#fff;',
+    style = 'background-color:#fff; padding-top:40px;',
     div(
       class = 'col-12',
       
@@ -54,51 +55,63 @@ ui <- fluidPage(
         div(
           class = 'col-12',
           style = 'text-align:center;',
-          br(),
-          h3('LifePalette'),
-          br(),
-          br(),
+          h3(id = 'page_title', 'LifePalette'),
           
           ### birthdate input ----
           div(
             id = 'dob_div',
+            style = 'padding-top:40px;',
             p(style = 'margin:0 0 10px 0;', 'Enter your birthdate.'),
             dateInput(inputId = 'dob', label = NULL, value = Sys.Date() %>% as.character(), startview = 'decade', width = '100%'),
           ),
           
-          br(),
-          br(),
-          
           div(
-            id = 'x_label',
-            style = 'margin:0 0 6px 0; padding:0; font-size:11px;',
-            span('years', HTML('&nbsp;'), icon('arrow-right-long')),
-          ),
-          
-          ### boxes ----
-          div(
-            class = 'grid_parent',
-            
+            id = 'boxes_div',
             div(
-              id = 'y_label',
-              style = 'writing-mode:vertical-rl; transform:scale(-1); margin:0 6px 0 0; padding:0; font-size:11px;',
-              span(icon('arrow-up-long'), HTML('&nbsp;'), 'weeks'),
+              id = 'x_label',
+              style = 'margin:0 0 6px 0; padding:40px 0 0 0; font-size:11px;',
+              span('years', HTML('&nbsp;'), icon('arrow-right-long')),
             ),
             
-            uiOutput(outputId = 'grid_container'),
-            
+            ### boxes ----
             div(
-              id = 'y_label',
-              style = 'writing-mode:vertical-rl; transform:scale(-1); margin:0 0 0 6px; padding:0; font-size:11px; visibility:hidden;',
-              span(icon('arrow-up-long'), HTML('&nbsp;'), 'weeks'),
-            ),
-            
+              class = 'grid_parent',
+              
+              div(
+                id = 'y_label',
+                style = 'writing-mode:vertical-rl; transform:scale(-1); margin:0 6px 0 0; padding:0; font-size:11px;',
+                span(icon('arrow-up-long'), HTML('&nbsp;'), 'weeks'),
+              ),
+              
+              div(
+                id = 'grid_container',
+                lapply(1:92, function(year) {
+                  lapply(1:53, function(week) {
+                    current_box <- week + (year-1)*53
+                    current_week <- week-1 + (year-2)*52
+
+                    if (year == 1 & week == 1) {
+                      div(class = 'grid_none', id = 'label_0')
+                    } else if (year == 1 & week != 1) {
+                      div(class = 'grid_label_week', id = paste0('label_week_', week-1), p(week-1))
+                    } else if (year != 1 & week == 1) {
+                      div(class = 'grid_label_year', id = paste0('label_year_', year-1), p(year-2))
+                    } else {
+                      div(class = 'grid_item', id = paste0('week_', sprintf('%04d', current_week)))
+                    }
+                  })
+                })
+              ),
+              
+              div(
+                id = 'y_label',
+                style = 'writing-mode:vertical-rl; transform:scale(-1); margin:0 0 0 6px; padding:0; font-size:11px; visibility:hidden;',
+                span(icon('arrow-up-long'), HTML('&nbsp;'), 'weeks'),
+              )
+            )
           ),
           
-          br(),
-          br(),
-          
-          p(style = 'font-size:12px;',
+          p(style = 'font-size:12px; padding-top:30px;',
             'Inspired by ', a('Your Life in Weeks', href = 'https://waitbutwhy.com/2014/05/life-weeks.html'), ' by Tim Urban.'
           )
         )

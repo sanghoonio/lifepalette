@@ -6,12 +6,67 @@ library(DBI)
 
 server <- function(input, output, session) {
   
-  ## auth ----
-  f <- FirebaseEmailPassword$new(config_path = 'data/firebase.rds', 
-                                 persistence = 'session'
+  ## helper functions ----
+  get_data <- function(tbl_column, db_table) {
+    con <- dbConnect(RSQLite::SQLite(), 'data/db.sqlite')
+    got_data <- dbGetQuery(con, paste0('SELECT "', tbl_column, '" FROM ', db_table))
+    dbDisconnect(con)
+    
+    return(got_data)
+  }
+  
+  update_data <- function(value, index, tbl_column, db_table) {
+    con <- dbConnect(RSQLite::SQLite(), 'data/db.sqlite')
+    query <- paste0('UPDATE ', db_table, ' SET "', tbl_column, '"="', value, '" WHERE "index"=', index, ';')
+    dbExecute(con, query)
+    dbDisconnect(con)
+    
+    return(0)
+  }
+  
+  add_data <- function(new_data, new_col, db_table) {
+    con <- dbConnect(RSQLite::SQLite(), 'data/db.sqlite')
+    query <- paste0('ALTER TABLE "', db_table, '" ADD COLUMN "', new_col, '" TEXT;')
+    dbExecute(con, query)
+    query <- paste0('UPDATE "', db_table, '" SET "', new_col, '" = "default";')
+    dbExecute(con, query)
+    query <- paste0('UPDATE "', db_table, '" SET "', new_col, '" = ? WHERE "index" = ?;')
+    dbExecute(con, query, params = new_data)
+    dbDisconnect(con)
+    
+    return(0)
+  }
+  
+  append_data <- function(new_data, db_table) {
+    con <- dbConnect(RSQLite::SQLite(), 'data/db.sqlite')
+    dbWriteTable(con, db_table, new_data, append = TRUE)
+    dbDisconnect(con)
+    
+    return(0)
+  }
+  
+  ## store data ----
+  user_colors <- reactiveVal(
+    data.frame(matrix(nrow = 52*91, ncol = 0)) %>% mutate(
+      default = rep('black', 52*91),
+    )
   )
   
-  # open modals
+  default_colors <- reactiveVal(
+    data.frame(matrix(nrow = 52*91, ncol = 0)) %>% mutate(
+      default = rep('black', 52*91),
+    )
+  )
+  
+  default_comments <- reactiveVal(
+    data.frame(matrix(nrow = 52*91, ncol = 0)) %>% mutate(
+      default = rep('', 52*91),
+    )
+  )
+  
+  ## auth ----
+  f <- FirebaseEmailPassword$new(config_path = 'data/firebase.rds')
+  
   observeEvent(input$register_modal, {
     showModal(
       modalDialog(
@@ -48,72 +103,91 @@ server <- function(input, output, session) {
   observeEvent(f$get_created(), {
     created <- f$get_created()
     
-    if (created$success){
+    if (created$success) {
       removeModal()
       showNotification('Account created!', type = 'message')
       
-      print(created$response$user$email)
+      user_email <- created$response$user$email
       
-      temp_data <- c(created$response$user$email, input$dob %>% as.character())
-      add_data(new_data = list(temp_data, 1:length(temp_data)), new_col = created$response$user$email, db_table = 'user_data')
+      temp_data <- c(user_email, input$dob %>% as.character())
+      add_data(new_data = list(temp_data, 1:length(temp_data)), new_col = user_email, db_table = 'user_data')
       
       temp_colors <- default_colors()[, 1]
       color_diff <- which(temp_colors != 'black')
-      add_data(new_data = list(temp_colors[color_diff], color_diff), new_col = created$response$user$email, db_table = 'user_colors')
+      add_data(new_data = list(temp_colors[color_diff], color_diff), new_col = user_email, db_table = 'user_colors')
       
       temp_comments <- default_comments()[, 1]
       comment_diff <- which(temp_comments != '')
-      add_data(new_data = list(temp_comments[comment_diff], comment_diff), new_col = created$response$user$email, db_table = 'user_comments')
+      add_data(new_data = list(temp_comments[comment_diff], comment_diff), new_col = user_email, db_table = 'user_comments')
       
     } else {
-      showNotification('Error!', type = 'error')
+      if (created$response$code == 'auth/email-already-in-use') {
+        error_msg <- 'Error: email already in use.'
+      } else if (created$response$code == 'auth/weak-password') {
+        error_msg <- 'Error: password is too weak.'
+      } else {
+        error_msg <- 'Error: account could not be made.'
+      }
+      showNotification(error_msg, type = 'error')
     }
   })
   
   ## sign in/out ----
   observeEvent(input$sign_in, {
-    removeModal()
     f$sign_in(input$email_signin, input$password_signin)
+    sign_in_clicked(1)
   })
   
   observeEvent(input$sign_out, {
     f$sign_out()
+    current_user('default')
+    
+    user_colors(default_colors())
+    
+    freezeReactiveValue(input, 'dob')
+    updateDateInput(inputId = 'dob', value = Sys.Date() %>% as.character())
   })
   
   ### current user ----
   current_user <- reactiveVal(value = 'default')
   
+  sign_in_clicked <- reactiveVal(0)
+
   #### set current user reactiveval ----
-  observe({
-    if (!is.null(f$get_signed_in())) {
-      current_user(f$get_signed_in()$response$email)
-    } else {
-      current_user('default')
+  observeEvent(f$get_signed_in(), {
+    user <- f$get_signed_in()$response$email
+    current_user(user)
+    
+    if (sign_in_clicked() == 1) {
+      removeModal()
+      showNotification('Login successful!', type = 'message')
+      sign_in_clicked(0)
     }
+    
+    user_colors(get_data(tbl_column = user, db_table = 'user_colors'))
+    
+    freezeReactiveValue(input, 'dob')
+    user_dob <- get_data(tbl_column = user, db_table = 'user_data')[2, 1]
+    updateDateInput(inputId = 'dob', value = user_dob)
   })
   
   #### do when current user reactiveval updates ----
   observeEvent(current_user(), {
     if (current_user() != 'default') {
-      user_dob <- get_data(tbl_column = current_user(), db_table = 'user_data')[2, 1]
-      updateDateInput(inputId = 'dob', value = user_dob)
-      
       removeUI(selector = '#register_modal')
       removeUI(selector = '#signin_modal')
       insertUI(selector = '#login_div',
                where = 'beforeEnd',
-               actionButton(style = 'float:right; width:100%;', class = 'btn btn-light', 'sign_out', 'Sign Out')
+               actionButton(style = 'width:100%;', class = 'btn btn-light', 'sign_out', 'Sign Out')
       )
     } else {
-      updateDateInput(inputId = 'dob', value = Sys.Date() %>% as.character())
-      
       insertUI(selector = '#login_div',
                where = 'beforeEnd',
-               actionButton(style = 'float:right;', class = 'btn btn-light', style = 'margin-left:10px;', 'register_modal', 'Register')
+               actionButton(style = 'margin-right:10px; width:CALC(50% - 5px);', class = 'btn btn-light', 'register_modal', 'Register')
       )
       insertUI(selector = '#login_div',
                where = 'beforeEnd',
-               actionButton(style = 'float:right;', class = 'btn btn-light', 'signin_modal', 'Sign In')
+               actionButton(style = 'width:CALC(50% - 5px); ', class = 'btn btn-light', 'signin_modal', 'Sign In')
       )
       removeUI(selector = '#sign_out')
     }
@@ -122,7 +196,6 @@ server <- function(input, output, session) {
   output$user <- renderUI({
     user <- current_user()
     if (user != 'default') {
-      # paste0('Logged in: ', user)
       div(
         style = 'text-align:center; clear:both; margin:10px 0 30px 0;',
         p(user)
@@ -132,112 +205,26 @@ server <- function(input, output, session) {
     }
   })
   
-  ## weeks elapsed from dob ----
-  weeks_diff <- reactiveVal(0)
+  ## calc weeks/boxes ----
   observeEvent(input$dob, {
-    weeks_diff((difftime(Sys.Date(), input$dob, units = 'weeks') * .9972594543) %>% floor())
+    dob <- input$dob
     
     if (current_user() != 'default') {
-      update_data(value = input$dob, 
+      update_data(value = dob, 
                   index = 2, 
                   tbl_column = current_user(), 
                   db_table = 'user_data'
       )
     }
-  })
-  
-  ## draw boxes ----
-  force_update <- reactiveVal(0)
-  
-  boxes <- list()
-  boxes_processed <- reactive({
-    force_update()
     
-    if (current_user() != 'default') {
-      user_colors <- get_data(tbl_column = current_user(), db_table = 'user_colors')
-    } else {
-      user_colors <- default_colors()
-    }
-    
-    # browser()
-    print(weeks_diff())
-    
-    boxes <- lapply(1:92, function(year) {
-      lapply(1:53, function(week) {
-        current_box <- week + (year-1)*53
-        current_week <- week-1 + (year-2)*52
-        if (year == 1 & week == 1) {
-          boxes[[current_box]] <- div(
-            class = 'grid_none',
-            id = paste0('box_', sprintf('%04d', current_box), '_label_0'),
-          )
-        } else if (year == 1 & week != 1) {
-          boxes[[current_box]] <- div(
-            class = 'grid_label_week',
-            id = paste0('box_', sprintf('%04d', current_box), '_label_week_', week-1),
-            p(week-1)
-          )
-        } else if (year != 1 & week == 1) {
-          boxes[[current_box]] <- div(
-            class = 'grid_label_year',
-            id = paste0('box_', sprintf('%04d', current_box), '_label_year_', year-1),
-            p(year-2)
-          )
-        } else {
-          if (current_week <= weeks_diff()) {
-            boxes[[current_box]] <- a(
-              class = paste0('grid_item filled ', user_colors[current_week, 1]),
-              id = paste0('box_', sprintf('%04d', current_box), '_week_', sprintf('%04d', current_week))
-            )
-          } else {
-            boxes[[current_box]] <- div(
-              class = 'grid_item',
-              id = paste0('box_', sprintf('%04d', current_box), '_week_', sprintf('%04d', current_week))
-            )
-          }
-        }
-        
-      })
+    weeks_diff <- ((difftime(Sys.Date(), dob, units = 'weeks') * .9972594543) %>% floor())
+    box_classes <- lapply(1:(52*90), function(week) {
+      ifelse((week < weeks_diff), paste0('grid_item filled ', user_colors()[week, 1]), 'grid_item')
     })
-  })
-  
-  ## output boxes ----
-  output$grid_container <- renderUI(boxes_processed())
-  
-  ## db functions ----
-  get_data <- function(tbl_column, db_table) {
-    con <- dbConnect(RSQLite::SQLite(), 'data/db.sqlite')
-    got_data <- dbGetQuery(con, paste0('SELECT "', tbl_column, '" FROM ', db_table))
-    dbDisconnect(con)
-    
-    return(got_data)
-  }
-  
-  update_data <- function(value, index, tbl_column, db_table) {
-    con <- dbConnect(RSQLite::SQLite(), 'data/db.sqlite')
-    query <- paste0('UPDATE ', db_table, ' SET "', tbl_column, '"="', value, '" WHERE "index"=', index, ';')
-    dbExecute(con, query)
-    dbDisconnect(con)
-    
-    return(0)
-  }
-  
-  add_data <- function(new_data, new_col, db_table) {
-    con <- dbConnect(RSQLite::SQLite(), 'data/db.sqlite')
-    query <- paste0('ALTER TABLE "', db_table, '" ADD COLUMN "', new_col, '" TEXT;')
-    dbExecute(con, query)
-    query <- paste0('UPDATE "', db_table, '" SET "', new_col, '" = "default";')
-    dbExecute(con, query)
-    query <- paste0('UPDATE "', db_table, '" SET "', new_col, '" = ? WHERE "index" = ?;')
-    dbExecute(con, query, params = new_data)
-    dbDisconnect(con)
-    
-    return(0)
-  }
-  
-  ## update db data ----
-  
-  ## modal ----
+    js$fillBoxes(box_classes)
+  }, ignoreInit = TRUE)
+
+  ### show modal ----
   observeEvent(input$click_filled, {
     user_colors <- get_data(tbl_column = current_user(), db_table = 'user_colors')
     user_comments <- get_data(tbl_column = current_user(), db_table = 'user_comments')
@@ -245,18 +232,10 @@ server <- function(input, output, session) {
     selected_id <- input$click_filled
     selected_week <- selected_id %>% substr(nchar(selected_id)-3, nchar(selected_id)) %>% as.numeric()
     
-    print(selected_id)
-    
     showModal(
       modalDialog(
         title = paste0('Week ', selected_week, '...'),
         textInput(inputId = 'week_number', label = 'week', value = selected_week) %>% hidden(),
-        # selectInput(inputId = 'set_color',
-        #             label = 'Color',
-        #             width = '100%',
-        #             choices = c('black', 'red', 'orange', 'yellow', 'green', 'blue', 'purple', 'brown'),
-        #             selected = user_colors[selected_week, 1]
-        # ),
         p(style = 'margin-bottom: 8px;', 'Color'),
         div(
           style = 'margin-left:56px;',
@@ -285,6 +264,7 @@ server <- function(input, output, session) {
     )
   })
   
+  ### close modal ----
   observeEvent(input$close_modal, {
     removeModal()
     
@@ -296,35 +276,25 @@ server <- function(input, output, session) {
                   tbl_column = current_user(), 
                   db_table = 'user_colors'
       )
-      
       update_data(value = input$set_comment, 
                   index = selected_week, 
                   tbl_column = current_user(), 
                   db_table = 'user_comments'
       )
+      user_colors(get_data(tbl_column = current_user(), db_table = 'user_colors'))
     } else {
       temp_colors <- default_colors()
       temp_colors[selected_week, 1] <- input$set_color
       default_colors(temp_colors)
+      user_colors(temp_colors)
       
       temp_comments <- default_comments()
       temp_colors[selected_week, 1] <- input$set_comment
       default_comments(temp_comments)
     }
     
-    force_update(force_update() + 1)
+    box_class <- paste0('grid_item filled ', user_colors()[selected_week, 1])
+    js$fillBox(box_class, selected_week)
   })
-  
-  default_colors <- reactiveVal(
-    data.frame(matrix(nrow = 52*91, ncol = 0)) %>% mutate(
-      default = rep('black', 52*91),
-    )
-  )
-  
-  default_comments <- reactiveVal(
-    data.frame(matrix(nrow = 52*91, ncol = 0)) %>% mutate(
-      default = rep('', 52*91),
-    )
-  )
   
 }

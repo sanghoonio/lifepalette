@@ -23,6 +23,19 @@ h1, h2, h3, h4, h5, h6 {
   font-style: normal;
 }
 
+#dob_div {
+  width: 300px;
+  margin: 0 auto;
+}
+
+.custom_dropdown {
+  padding: 20px;
+  font-size: 14px;
+  box-shadow: 0 1px 10px #00000020;
+}
+
+/* BOXES */
+
 .grid_parent {
   display: flex;
   flex-direction: row;
@@ -44,11 +57,46 @@ h1, h2, h3, h4, h5, h6 {
   background-color: #fff;
   border: 1.5px solid #000;
   border-radius: 2.5px;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }
 
 .filled:hover {
   cursor: pointer;
 }
+
+.grid_label_week {
+  width: 12px;
+  height: 12px;
+  background-color: #00000000;
+  border: 1.5px solid #00000000;
+  border-radius: 2.5px;
+  font-size: 8px;
+  line-height: 8px;
+  text-align: right;
+}
+
+.grid_label_year {
+  width: 12px;
+  height: 12px;
+  background-color: #00000000;
+  border: 1.5px solid #00000000;
+  border-radius: 2.5px;
+  font-size: 8px;
+  line-height: 12px;
+  text-align: center;
+}
+
+.grid_none {
+  width: 12px;
+  height: 12px;
+  background-color: #00000000;
+  border: 1.5px solid #00000000;
+  border-radius: 2.5px;
+  font-size: 8px;
+  line-height: 8px;
+}
+
+/* COLORS */
 
 .black {
   background-color: black !important;
@@ -130,45 +178,33 @@ input[type='radio'][value='brown'] {
   border: 2px solid rosybrown !important;
 }
 
-.grid_label_week {
-  width: 12px;
-  height: 12px;
-  background-color: #fff;
-  border: 1.5px solid #fff;
-  border-radius: 2.5px;
-  font-size: 8px;
-  line-height: 8px;
-  text-align: right;
-}
+/* PRINT */
 
-.grid_label_year {
-  width: 12px;
-  height: 12px;
-  background-color: #fff;
-  border: 1.5px solid #fff;
-  border-radius: 2.5px;
-  font-size: 8px;
-  line-height: 12px;
-  text-align: center;
-}
-
-.grid_none {
-  width: 12px;
-  height: 12px;
-  background-color: #fff;
-  border: 1.5px solid #fff;
-  border-radius: 2.5px;
-  font-size: 8px;
-  line-height: 8px;
-}
-
-#dob_div {
-  width: 300px;
-  margin: 0 auto;
-}
-
-.custom_dropdown {
-  padding: 20px;
-  font-size: 14px;
-  box-shadow: 0 1px 10px #00000020;
+@media print {
+  @page {
+    size: landscape;
+    margin: 0;
+    overflow: visible;
+  }
+  
+  body {
+    visibility: hidden;
+  }
+  
+  #page_title {
+    visibility: visible;
+    position: absolute;
+    left: 1.2cm;
+    top: 1.2cm;
+    transform: scale(0.8);
+    transform-origin: top left;
+  }
+  
+  #boxes_div {
+    visibility: visible;
+    position: absolute;
+    left: 1.3cm;
+    top: 3.2cm;
+    zoom: 68%;
+  }
 }
