@@ -46,18 +46,21 @@ server <- function(input, output, session) {
   }
   
   ## store data ----
-  user_colors <- reactiveVal(
+  ### used for rendering colors
+  render_colors <- reactiveVal(
     data.frame(matrix(nrow = 52*91, ncol = 0)) %>% mutate(
       default = rep('black', 52*91),
     )
   )
   
+  ### used for keeping temp data for default and newly created user
   default_colors <- reactiveVal(
     data.frame(matrix(nrow = 52*91, ncol = 0)) %>% mutate(
       default = rep('black', 52*91),
     )
   )
   
+  ### used for keeping temp data for default and newly created user
   default_comments <- reactiveVal(
     data.frame(matrix(nrow = 52*91, ncol = 0)) %>% mutate(
       default = rep('', 52*91),
@@ -109,6 +112,7 @@ server <- function(input, output, session) {
       
       user_email <- created$response$user$email
       
+      ### use current temp data as new user data
       temp_data <- c(user_email, input$dob %>% as.character())
       add_data(new_data = list(temp_data, 1:length(temp_data)), new_col = user_email, db_table = 'user_data')
       
@@ -142,7 +146,7 @@ server <- function(input, output, session) {
     f$sign_out()
     current_user('default')
     
-    user_colors(default_colors())
+    render_colors(default_colors())
     
     freezeReactiveValue(input, 'dob')
     updateDateInput(inputId = 'dob', value = Sys.Date() %>% as.character())
@@ -164,7 +168,7 @@ server <- function(input, output, session) {
       sign_in_clicked(0)
     }
     
-    user_colors(get_data(tbl_column = user, db_table = 'user_colors'))
+    render_colors(get_data(tbl_column = user, db_table = 'user_colors'))
     
     freezeReactiveValue(input, 'dob')
     user_dob <- get_data(tbl_column = user, db_table = 'user_data')[2, 1]
@@ -219,15 +223,21 @@ server <- function(input, output, session) {
     
     weeks_diff <- ((difftime(Sys.Date(), dob, units = 'weeks') * .9972594543) %>% floor())
     box_classes <- lapply(1:(52*90), function(week) {
-      ifelse((week < weeks_diff), paste0('grid_item filled ', user_colors()[week, 1]), 'grid_item')
+      ifelse((week < weeks_diff), paste0('grid_item filled ', render_colors()[week, 1]), 'grid_item')
     })
     js$fillBoxes(box_classes)
   }, ignoreInit = TRUE)
 
   ### show modal ----
   observeEvent(input$click_filled, {
-    user_colors <- get_data(tbl_column = current_user(), db_table = 'user_colors')
-    user_comments <- get_data(tbl_column = current_user(), db_table = 'user_comments')
+    
+    if (current_user() != 'default') {
+      user_colors <- get_data(tbl_column = current_user(), db_table = 'user_colors')
+      user_comments <- get_data(tbl_column = current_user(), db_table = 'user_comments')
+    } else {
+      user_colors <- default_colors()
+      user_comments <- default_comments()
+    }
     
     selected_id <- input$click_filled
     selected_week <- selected_id %>% substr(nchar(selected_id)-3, nchar(selected_id)) %>% as.numeric()
@@ -238,7 +248,6 @@ server <- function(input, output, session) {
         textInput(inputId = 'week_number', label = 'week', value = selected_week) %>% hidden(),
         p(style = 'margin-bottom: 8px;', 'Color'),
         div(
-          style = 'margin-left:56px;',
           radioButtons(inputId = 'set_color',
                        label = NULL, 
                        inline = TRUE,
@@ -281,19 +290,19 @@ server <- function(input, output, session) {
                   tbl_column = current_user(), 
                   db_table = 'user_comments'
       )
-      user_colors(get_data(tbl_column = current_user(), db_table = 'user_colors'))
+      render_colors(get_data(tbl_column = current_user(), db_table = 'user_colors'))
     } else {
       temp_colors <- default_colors()
       temp_colors[selected_week, 1] <- input$set_color
       default_colors(temp_colors)
-      user_colors(temp_colors)
+      render_colors(temp_colors)
       
       temp_comments <- default_comments()
-      temp_colors[selected_week, 1] <- input$set_comment
+      temp_comments[selected_week, 1] <- input$set_comment
       default_comments(temp_comments)
     }
     
-    box_class <- paste0('grid_item filled ', user_colors()[selected_week, 1])
+    box_class <- paste0('grid_item filled ', render_colors()[selected_week, 1])
     js$fillBox(box_class, selected_week)
   })
   

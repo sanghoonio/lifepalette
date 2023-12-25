@@ -165,6 +165,22 @@ h1, h2, h3, h4, h5, h6 {
   font-size: 11px;
 }
 
+/* COLOR RADIOBUTTONS */
+
+.form-check-input[type="radio"], .shiny-input-container .checkbox input[type="radio"], .shiny-input-container .checkbox-inline input[type="radio"], .shiny-input-container .radio input[type="radio"], .shiny-input-container .radio-inline input[type="radio"] {
+  margin-left: 10px;
+  margin-right: 10px;
+  border-radius: 4.5px;
+  width: 20px;
+  height: 20px;
+}
+
+.shiny-input-checkboxgroup label~.shiny-options-group, .shiny-input-radiogroup label~.shiny-options-group {
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: space-around;
+}
+
 /* COLORS */
 
 .black {
