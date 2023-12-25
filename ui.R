@@ -82,10 +82,12 @@ ui <- fluidPage(
               
               div(
                 class = 'y_label wide_label',
+                style = 'margin:0 6px 0 0;',
                 span(icon('arrow-up-long'), HTML('&nbsp;'), 'weeks'),
               ),
               div(
                 class = 'y_label tall_label',
+                style = 'margin:0 6px 0 0;',
                 span(icon('arrow-up-long'), HTML('&nbsp;'), 'years'),
               ),
               
@@ -111,7 +113,7 @@ ui <- fluidPage(
               
               div(
                 class = 'y_label',
-                style = 'visibility:hidden;',
+                style = 'visibility:hidden; margin:0 0 0 6px;',
                 span(icon('arrow-up-long')),
               )
             )
