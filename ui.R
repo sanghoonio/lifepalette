@@ -23,7 +23,7 @@ ui <- fluidPage(
     class = 'row',
     ## dropdown ----
     div(
-      style = 'height:46px;',
+      style = 'height:48px;',
       tags$button(
         class = 'btn',
         style = 'float:right; padding:6px 12px; margin:5px 5px 0 0;',
