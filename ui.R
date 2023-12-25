@@ -11,8 +11,7 @@ ui <- fluidPage(
   useFirebase(),
   theme = bs_theme(version = 5),
   
-  tags$script(src = 'script.js'),
-  extendShinyjs(script = 'script.js', functions = c('fillBoxes', 'fillBox')),
+  extendShinyjs(script = 'script.js', functions = c('fillBoxes', 'fillBox', 'updateDOBInputs')),
   
   tags$head(
     tags$title('LifePalette'),
@@ -62,7 +61,28 @@ ui <- fluidPage(
             id = 'dob_div',
             style = 'padding-top:40px;',
             p(style = 'margin:0 0 10px 0;', 'Enter your birthdate.'),
-            dateInput(inputId = 'dob', label = NULL, value = Sys.Date() %>% as.character(), startview = 'decade', width = '100%'),
+            div(
+              id = 'dob_inputs',
+              tags$select(
+                class = 'dob_input',
+                id = 'year_input',
+                style = 'width:5ch;',
+              ),
+              tags$select(
+                class = 'dob_input',
+                id = 'month_input',
+                style = 'width:9ch;',
+              ),
+              tags$select(
+                class = 'dob_input',
+                id = 'day_input',
+                style = 'width:3ch;',
+              ),
+              tags$button(
+                id = 'submit_dob',
+                'Go!'
+              )
+            )
           ),
           
           div(
@@ -97,7 +117,7 @@ ui <- fluidPage(
                   lapply(1:53, function(week) {
                     current_box <- week + (year-1)*53
                     current_week <- week-1 + (year-2)*52
-
+                    
                     if (year == 1 & week == 1) {
                       div(class = 'grid_none', id = 'label_0')
                     } else if (year == 1 & week != 1) {

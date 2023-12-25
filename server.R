@@ -148,8 +148,9 @@ server <- function(input, output, session) {
     
     render_colors(default_colors())
     
+    today <- Sys.Date()
     freezeReactiveValue(input, 'dob')
-    updateDateInput(inputId = 'dob', value = Sys.Date() %>% as.character())
+    js$updateDOBInputs(as.numeric(format(today, '%Y')), as.numeric(format(today, '%m')), as.numeric(format(today, '%d')))
   })
   
   ### current user ----
@@ -170,9 +171,9 @@ server <- function(input, output, session) {
     
     render_colors(get_data(tbl_column = user, db_table = 'user_colors'))
     
+    user_dob <- get_data(tbl_column = user, db_table = 'user_data')[2, 1] %>% as.Date(format = '%Y-%m-%d')
     freezeReactiveValue(input, 'dob')
-    user_dob <- get_data(tbl_column = user, db_table = 'user_data')[2, 1]
-    updateDateInput(inputId = 'dob', value = user_dob)
+    js$updateDOBInputs(as.numeric(format(user_dob, '%Y')), as.numeric(format(user_dob, '%m')), as.numeric(format(user_dob, '%d')))
   })
   
   #### do when current user reactiveval updates ----
@@ -222,7 +223,7 @@ server <- function(input, output, session) {
     }
     
     weeks_diff <- ((difftime(Sys.Date(), dob, units = 'weeks') * 52*7/365.25) %>% floor())
-    box_classes <- lapply(1:(52*90), function(week) {
+    box_classes <- lapply(1:(52*91), function(week) {
       ifelse((week <= weeks_diff), paste0('grid_item filled ', render_colors()[week, 1]), 'grid_item')
     })
     js$fillBoxes(box_classes)
