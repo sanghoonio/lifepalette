@@ -21,6 +21,8 @@ ui <- fluidPage(
     tags$link(rel = 'manifest', href = '/site.webmanifest')
   ),
   
+  tags$meta(name = 'theme-color', content = '#ddd'),
+  
   div(
     class = 'row',
     
