@@ -15,16 +15,20 @@ ui <- fluidPage(
   
   tags$head(
     tags$title('LifePalette'),
-    tags$link(rel = 'stylesheet', type = 'text/css', href = 'style.css')
+    tags$link(rel = 'stylesheet', type = 'text/css', href = 'style.css'),
+    tags$link(rel = 'icon', type = 'image/x-icon', href = '/favicon.ico'),
+    tags$link(rel = 'apple-touch-icon', sizes='180x180', href = '/apple-touch-icon.png'),
+    tags$link(rel = 'manifest', href = '/site.webmanifest')
   ),
   
   div(
     class = 'row',
+    
     ## dropdown ----
     div(
       style = 'height:48px;',
       tags$button(
-        class = 'btn',
+        class = 'btn btn_settings',
         style = 'float:right; padding:6px 12px; margin:5px 5px 0 0;',
         `data-bs-toggle` = 'dropdown',
         `aria-expanded` = 'false',
@@ -44,7 +48,7 @@ ui <- fluidPage(
   
   div(
     class = 'row',
-    style = 'background-color:#fff; padding-top:40px;',
+    style = 'background-color:#fff; padding-top:48px;',
     div(
       class = 'col-12',
       
@@ -87,6 +91,7 @@ ui <- fluidPage(
           
           div(
             id = 'boxes_div',
+            style = 'padding-top:40px;',
             div(
               class = 'x_label wide_label',
               span('years', HTML('&nbsp;'), icon('arrow-right-long')),
@@ -139,7 +144,21 @@ ui <- fluidPage(
             )
           ),
           
-          p(style = 'font-size:12px; padding-top:30px;',
+          p(
+            id = 'contact',
+            style = 'padding-top:30px; margin:0; font-size: 1.5em;',
+            a(
+              href = 'https://github.com/sanghoonio/lifepalette',
+              icon(name = 'square-github')
+            ),
+            a(
+              href = 'https://www.linkedin.com/in/sanghoonio/',
+              icon(name = 'linkedin')
+            ),
+          ),
+          p(
+            id = 'credits',
+            style = 'font-size:12px;',
             'Inspired by ', a('Your Life in Weeks', href = 'https://waitbutwhy.com/2014/05/life-weeks.html'), ' by Tim Urban.'
           )
         )
