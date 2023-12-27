@@ -95,14 +95,13 @@ server <- function(input, output, session) {
     
     if (created$success) {
       removeModal()
-      showNotification('Account created!', type = 'message')
       
       user_email <- created$response$user$email
       
       ### use current default user data as new user data
       user_list <- data.frame(matrix(nrow = 1, ncol = 0)) %>% mutate(
         user = user_email,
-        dob = input$dob %>% as.character()
+        dob = ifelse(is.null(input$dob), Sys.Date() %>% as.character(), input$dob %>% as.character())
       )
       
       user_data <- data.frame(matrix(nrow = 52*91, ncol = 0)) %>% mutate(
@@ -115,15 +114,16 @@ server <- function(input, output, session) {
       append_data(new_data = user_list, db_table = 'user_list')
       append_data(new_data = user_data, db_table = 'user_data')
       
+      showNotification('Account created.', duration = 3, type = 'message')
     } else {
       if (created$response$code == 'auth/email-already-in-use') {
-        error_msg <- 'Error: email already in use.'
+        error_msg <- 'Error: account already exists.'
       } else if (created$response$code == 'auth/weak-password') {
         error_msg <- 'Error: password is too weak.'
       } else {
         error_msg <- 'Error: account could not be made.'
       }
-      showNotification(error_msg, type = 'error')
+      showNotification(error_msg, duration = 3, type = 'error')
     }
   })
   
@@ -152,19 +152,42 @@ server <- function(input, output, session) {
   #### set current user reactiveval ----
   observeEvent(f$get_signed_in(), {
     user <- f$get_signed_in()$response$email
-    current_user(user)
+    
+    check_user <- get_data(where = user, index_column = 'user', tbl_column = 'user', db_table = 'user_list')
+    
+    if (nrow(check_user) == 0) {
+      user_list <- data.frame(matrix(nrow = 1, ncol = 0)) %>% mutate(
+        user = user,
+        dob = ifelse(is.null(input$dob), Sys.Date() %>% as.character(), input$dob %>% as.character())
+      )
+      
+      user_data <- data.frame(matrix(nrow = 52*91, ncol = 0)) %>% mutate(
+        week = 1:(52*91),
+        user = rep(user, 52*91),
+        color = default_colors()[, 1],
+        comment = default_comments()[, 1]
+      )
+      
+      append_data(new_data = user_list, db_table = 'user_list')
+      append_data(new_data = user_data, db_table = 'user_data')
+      
+      showNotification('Account created.', duration = 3, type = 'message')
+    } else {
+      render_colors(get_data(where = user, index_column = 'user', tbl_column = 'color', db_table = 'user_data'))
+      
+      user_dob <- get_data(where = user, index_column = 'user', tbl_column = 'dob', db_table = 'user_list')[1, 1] %>% as.Date(format = '%Y-%m-%d')
+      freezeReactiveValue(input, 'dob')
+      js$updateDOBInputs(as.numeric(format(user_dob, '%Y')), as.numeric(format(user_dob, '%m')), as.numeric(format(user_dob, '%d')))
+      
+      showNotification('Signed in.', duration = 3, type = 'message')
+    }
     
     if (sign_in_clicked() == 1) {
       removeModal()
-      showNotification('Login successful!', type = 'message')
       sign_in_clicked(0)
     }
     
-    render_colors(get_data(where = user, index_column = 'user', tbl_column = 'color', db_table = 'user_data'))
-    
-    user_dob <- get_data(where = user, index_column = 'user', tbl_column = 'dob', db_table = 'user_list')[1, 1] %>% as.Date(format = '%Y-%m-%d')
-    freezeReactiveValue(input, 'dob')
-    js$updateDOBInputs(as.numeric(format(user_dob, '%Y')), as.numeric(format(user_dob, '%m')), as.numeric(format(user_dob, '%d')))
+    current_user(user)
   })
   
   #### do when current user reactiveval updates ----
