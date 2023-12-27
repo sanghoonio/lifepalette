@@ -7,31 +7,18 @@ library(DBI)
 server <- function(input, output, session) {
   
   ## helper functions ----
-  get_data <- function(tbl_column, db_table) {
+  get_data <- function(where, index_column, tbl_column, db_table) {
     con <- dbConnect(RSQLite::SQLite(), 'data/db.sqlite')
-    got_data <- dbGetQuery(con, paste0('SELECT "', tbl_column, '" FROM ', db_table))
+    got_data <- dbGetQuery(con, paste0('SELECT "', tbl_column, '" FROM "', db_table, '" WHERE "', index_column, '"="', where, '";'))
     dbDisconnect(con)
     
     return(got_data)
   }
   
-  update_data <- function(value, index, tbl_column, db_table) {
+  update_data <- function(value, user, where, index_column, tbl_column, db_table) {
     con <- dbConnect(RSQLite::SQLite(), 'data/db.sqlite')
-    query <- paste0('UPDATE ', db_table, ' SET "', tbl_column, '"="', value, '" WHERE "index"=', index, ';')
+    query <- paste0('UPDATE ', db_table, ' SET "', tbl_column, '"="', value, '" WHERE "', index_column, '"="', where, '" AND', '"user"="', user, '";')
     dbExecute(con, query)
-    dbDisconnect(con)
-    
-    return(0)
-  }
-  
-  add_data <- function(new_data, new_col, db_table) {
-    con <- dbConnect(RSQLite::SQLite(), 'data/db.sqlite')
-    query <- paste0('ALTER TABLE "', db_table, '" ADD COLUMN "', new_col, '" TEXT;')
-    dbExecute(con, query)
-    query <- paste0('UPDATE "', db_table, '" SET "', new_col, '" = "default";')
-    dbExecute(con, query)
-    query <- paste0('UPDATE "', db_table, '" SET "', new_col, '" = ? WHERE "index" = ?;')
-    dbExecute(con, query, params = new_data)
     dbDisconnect(con)
     
     return(0)
@@ -112,17 +99,21 @@ server <- function(input, output, session) {
       
       user_email <- created$response$user$email
       
-      ### use current temp data as new user data
-      temp_data <- c(user_email, input$dob %>% as.character())
-      add_data(new_data = list(temp_data, 1:length(temp_data)), new_col = user_email, db_table = 'user_data')
+      ### use current default user data as new user data
+      user_list <- data.frame(matrix(nrow = 1, ncol = 0)) %>% mutate(
+        user = user_email,
+        dob = input$dob %>% as.character()
+      )
       
-      temp_colors <- default_colors()[, 1]
-      color_diff <- which(temp_colors != 'black')
-      add_data(new_data = list(temp_colors[color_diff], color_diff), new_col = user_email, db_table = 'user_colors')
+      user_data <- data.frame(matrix(nrow = 52*91, ncol = 0)) %>% mutate(
+        week = 1:(52*91),
+        user = rep(user_email, 52*91),
+        color = default_colors()[, 1],
+        comment = default_comments()[, 1]
+      )
       
-      temp_comments <- default_comments()[, 1]
-      comment_diff <- which(temp_comments != '')
-      add_data(new_data = list(temp_comments[comment_diff], comment_diff), new_col = user_email, db_table = 'user_comments')
+      append_data(new_data = user_list, db_table = 'user_list')
+      append_data(new_data = user_data, db_table = 'user_data')
       
     } else {
       if (created$response$code == 'auth/email-already-in-use') {
@@ -169,9 +160,9 @@ server <- function(input, output, session) {
       sign_in_clicked(0)
     }
     
-    render_colors(get_data(tbl_column = user, db_table = 'user_colors'))
+    render_colors(get_data(where = user, index_column = 'user', tbl_column = 'color', db_table = 'user_data'))
     
-    user_dob <- get_data(tbl_column = user, db_table = 'user_data')[2, 1] %>% as.Date(format = '%Y-%m-%d')
+    user_dob <- get_data(where = user, index_column = 'user', tbl_column = 'dob', db_table = 'user_list')[1, 1] %>% as.Date(format = '%Y-%m-%d')
     freezeReactiveValue(input, 'dob')
     js$updateDOBInputs(as.numeric(format(user_dob, '%Y')), as.numeric(format(user_dob, '%m')), as.numeric(format(user_dob, '%d')))
   })
@@ -210,15 +201,17 @@ server <- function(input, output, session) {
     }
   })
   
-  ## calc weeks/boxes ----
+  ## calc weeks/boxes with date input ----
   observeEvent(input$dob, {
     dob <- input$dob
     
     if (current_user() != 'default') {
-      update_data(value = dob, 
-                  index = 2, 
-                  tbl_column = current_user(), 
-                  db_table = 'user_data'
+      update_data(value = dob,
+                  user = current_user(),
+                  where = current_user(), 
+                  index_col = 'user',
+                  tbl_column = 'dob', 
+                  db_table = 'user_list'
       )
     }
     
@@ -231,10 +224,11 @@ server <- function(input, output, session) {
 
   ### show modal ----
   observeEvent(input$click_filled, {
+    user <- current_user()
     
-    if (current_user() != 'default') {
-      user_colors <- get_data(tbl_column = current_user(), db_table = 'user_colors')
-      user_comments <- get_data(tbl_column = current_user(), db_table = 'user_comments')
+    if (user != 'default') {
+      user_colors <- get_data(where = user, index_column = 'user', tbl_column = 'color', db_table = 'user_data')
+      user_comments <- get_data(where = user, index_column = 'user', tbl_column = 'comment', db_table = 'user_data')
     } else {
       user_colors <- default_colors()
       user_comments <- default_comments()
@@ -278,20 +272,25 @@ server <- function(input, output, session) {
   observeEvent(input$close_modal, {
     removeModal()
     
+    user <- current_user()
     selected_week <- input$week_number %>% as.numeric()
     
     if (current_user() != 'default') {
-      update_data(value = input$set_color, 
-                  index = selected_week, 
-                  tbl_column = current_user(), 
-                  db_table = 'user_colors'
+      update_data(value = input$set_color,
+                  user = user,
+                  where = selected_week,
+                  index_column = 'week',
+                  tbl_column = 'color', 
+                  db_table = 'user_data'
       )
-      update_data(value = input$set_comment, 
-                  index = selected_week, 
-                  tbl_column = current_user(), 
-                  db_table = 'user_comments'
+      update_data(value = input$set_comment,
+                  user = user,
+                  where = selected_week,
+                  index_column = 'week',
+                  tbl_column = 'comment', 
+                  db_table = 'user_data'
       )
-      render_colors(get_data(tbl_column = current_user(), db_table = 'user_colors'))
+      render_colors(get_data(where = user, index_column = 'user', tbl_column = 'color', db_table = 'user_data'))
     } else {
       temp_colors <- default_colors()
       temp_colors[selected_week, 1] <- input$set_color
