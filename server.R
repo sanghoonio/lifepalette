@@ -101,7 +101,7 @@ server <- function(input, output, session) {
       ### use current default user data as new user data
       user_list <- data.frame(matrix(nrow = 1, ncol = 0)) %>% mutate(
         user = user_email,
-        dob = ifelse(is.null(input$dob), Sys.Date() %>% as.character(), input$dob %>% as.character())
+        dob = ifelse(is.null(input$dob), input$local_date %>% as.character(), input$dob %>% as.character())
       )
       
       user_data <- data.frame(matrix(nrow = 52*91, ncol = 0)) %>% mutate(
@@ -139,7 +139,9 @@ server <- function(input, output, session) {
     
     render_colors(default_colors())
     
-    today <- Sys.Date()
+    browser()
+    
+    today <- input$local_date %>% as.Date()
     freezeReactiveValue(input, 'dob')
     js$updateDOBInputs(as.numeric(format(today, '%Y')), as.numeric(format(today, '%m')), as.numeric(format(today, '%d')))
   })
@@ -148,7 +150,7 @@ server <- function(input, output, session) {
   current_user <- reactiveVal(value = 'default')
   
   sign_in_clicked <- reactiveVal(0)
-
+  
   #### set current user reactiveval ----
   observeEvent(f$get_signed_in(), {
     user <- f$get_signed_in()$response$email
@@ -158,7 +160,7 @@ server <- function(input, output, session) {
     if (nrow(check_user) == 0) {
       user_list <- data.frame(matrix(nrow = 1, ncol = 0)) %>% mutate(
         user = user,
-        dob = ifelse(is.null(input$dob), Sys.Date() %>% as.character(), input$dob %>% as.character())
+        dob = ifelse(is.null(input$dob), input$local_date %>% as.character(), input$dob %>% as.character())
       )
       
       user_data <- data.frame(matrix(nrow = 52*91, ncol = 0)) %>% mutate(
@@ -244,7 +246,7 @@ server <- function(input, output, session) {
     })
     js$fillBoxes(box_classes)
   }, ignoreInit = TRUE)
-
+  
   ### show modal ----
   observeEvent(input$click_filled, {
     user <- current_user()
@@ -276,11 +278,12 @@ server <- function(input, output, session) {
         ),
         
         br(),
+        br(),
         textAreaInput(inputId = 'set_comment',
-                      label = 'Comment',
+                      label = 'Notes',
                       width = '100%',
                       value = user_comments[selected_week, 1],
-                      placeholder = 'type your comment here...'
+                      placeholder = 'type your note here...',
         ),
         footer = tagList(
           modalButton('Cancel'),
@@ -289,6 +292,8 @@ server <- function(input, output, session) {
         easyClose = FALSE
       )
     )
+    
+    shinyjs::runjs("$('#set_comment').attr('maxlength', 2000)")
   })
   
   ### close modal ----
@@ -297,6 +302,7 @@ server <- function(input, output, session) {
     
     user <- current_user()
     selected_week <- input$week_number %>% as.numeric()
+    comment_truncated <- str_trunc(input$set_comment, 2000, 'right')
     
     if (current_user() != 'default') {
       update_data(value = input$set_color,
@@ -306,7 +312,7 @@ server <- function(input, output, session) {
                   tbl_column = 'color', 
                   db_table = 'user_data'
       )
-      update_data(value = input$set_comment,
+      update_data(value = comment_truncated,
                   user = user,
                   where = selected_week,
                   index_column = 'week',
@@ -321,7 +327,7 @@ server <- function(input, output, session) {
       render_colors(temp_colors)
       
       temp_comments <- default_comments()
-      temp_comments[selected_week, 1] <- input$set_comment
+      temp_comments[selected_week, 1] <- comment_truncated
       default_comments(temp_comments)
     }
     

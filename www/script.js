@@ -134,3 +134,14 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 });
+
+
+// get local date for server
+$(document).on('shiny:connected', function() {
+  var d = new Date();
+  var month = d.getMonth();
+  var year = d.getFullYear();
+  var day = d.getDate();
+  
+  Shiny.setInputValue('local_date', (year + '-' + ('00'+(month + 1)).slice(-2) + '-' + ('00'+day).slice(-2)));
+});
