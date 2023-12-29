@@ -33,6 +33,10 @@ h1, h2, h3, h4, h5, h6 {
   filter: brightness(92%);
 }
 
+.tooltip.show.fade {
+  transition-delay: 0.8s !important;
+}
+
 .custom_dropdown {
   padding: 20px;
   font-size: 14px;

@@ -63,6 +63,7 @@ server <- function(input, output, session) {
         title = 'Register',
         textInput('email_create', 'Your email', width = '100%'),
         passwordInput('password_create', 'Your password', width = '100%'),
+        passwordInput('password_confirm', 'Confirm password', width = '100%'),
         footer = tagList(
           modalButton('Cancel'),
           actionButton('create', 'Register')
@@ -74,20 +75,46 @@ server <- function(input, output, session) {
   observeEvent(input$signin_modal, {
     showModal(
       modalDialog(
-        title = 'Sign in',
+        title = 'Sign in ',
         textInput('email_signin', 'Your email', width = '100%'),
         passwordInput('password_signin', 'Your password', width = '100%'),
+        actionLink(inputId = 'forgot_pw', label = 'Forgot password?'),
         footer = tagList(
-          modalButton('Cancel'),
-          actionButton('sign_in', 'Sign in')
+          actionButton('cancel_signin', 'Cancel'),
+          tooltip(
+            actionButton('sign_in', 'Sign in'), 
+            'If this window does not close after clicking, check your login info.', 
+            placement = 'top'
+          )
         ),
         easyClose = FALSE
       ))
   })
   
+  observeEvent(input$forgot_pw, {
+    showModal(
+      modalDialog(
+        title = 'Reset password',
+        textInput('email_reset', 'Your email', width = '100%'),
+        footer = tagList(
+          modalButton('Cancel'),
+          actionButton('reset_pw', 'Send reset link')
+        ),
+        easyClose = FALSE
+      ))
+  })
+  
+  observeEvent(input$cancel_signin, {
+    removeModal()
+  })
+  
   ## create user ----
   observeEvent(input$create, {
-    f$create(input$email_create, input$password_create)
+    if (input$password_create == input$password_confirm) {
+      f$create(input$email_create, input$password_create)
+    } else {
+      showNotification('Error: passwords do not match.', duration = 3, type = 'error')
+    }
   })
   
   observeEvent(f$get_created(), {
@@ -130,7 +157,6 @@ server <- function(input, output, session) {
   ## sign in/out ----
   observeEvent(input$sign_in, {
     f$sign_in(input$email_signin, input$password_signin)
-    sign_in_clicked(1)
   })
   
   observeEvent(input$sign_out, {
@@ -138,8 +164,6 @@ server <- function(input, output, session) {
     current_user('default')
     
     render_colors(default_colors())
-    
-    browser()
     
     today <- input$local_date %>% as.Date()
     freezeReactiveValue(input, 'dob')
@@ -149,10 +173,9 @@ server <- function(input, output, session) {
   ### current user ----
   current_user <- reactiveVal(value = 'default')
   
-  sign_in_clicked <- reactiveVal(0)
-  
   #### set current user reactiveval ----
   observeEvent(f$get_signed_in(), {
+    removeModal()
     user <- f$get_signed_in()$response$email
     
     check_user <- get_data(where = user, index_column = 'user', tbl_column = 'user', db_table = 'user_list')
@@ -184,12 +207,28 @@ server <- function(input, output, session) {
       showNotification('Signed in.', duration = 3, type = 'message')
     }
     
-    if (sign_in_clicked() == 1) {
-      removeModal()
-      sign_in_clicked(0)
-    }
-    
     current_user(user)
+  })
+  
+  #### reset password ----
+  observeEvent(input$reset_pw, {
+    f$reset_password(input$email_reset)
+  })
+  
+  observeEvent(f$get_reset(), {
+    response <- f$get_reset()
+    check_user <- get_data(where = input$email_reset, index_column = 'user', tbl_column = 'user', db_table = 'user_list')
+    
+    if (nrow(check_user) == 0) {
+      showNotification('Error: account does not exist.', duration = 3, type = 'error')
+    } else {
+      if (response$success) {
+        removeModal()
+        showNotification('Email link sent.', duration = 3, type = 'message')
+      } else {
+        showNotification('Error: password cannot be reset.', duration = 3, type = 'error')
+      }
+    }
   })
   
   #### do when current user reactiveval updates ----
@@ -276,12 +315,11 @@ server <- function(input, output, session) {
                        choiceNames = c('','','','','','','','')
           ),
         ),
-        
-        br(),
         br(),
         textAreaInput(inputId = 'set_comment',
                       label = 'Notes',
                       width = '100%',
+                      rows = 5,
                       value = user_comments[selected_week, 1],
                       placeholder = 'type your note here...',
         ),
