@@ -54,7 +54,11 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 #credits a:link {
-  color: #bbb !important;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+#forgot_pw {
   font-weight: 700;
   text-decoration: none;
 }
