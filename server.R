@@ -61,9 +61,9 @@ server <- function(input, output, session) {
     showModal(
       modalDialog(
         title = 'Register',
-        textInput('email_create', 'Your email', width = '100%'),
-        passwordInput('password_create', 'Your password', width = '100%'),
-        passwordInput('password_confirm', 'Confirm password', width = '100%'),
+        textInput('email_create', 'Email', width = '100%'),
+        passwordInput('password_create', 'Password', width = '100%'),
+        passwordInput('password_confirm', 'Confirm Password', width = '100%'),
         footer = tagList(
           modalButton('Cancel'),
           actionButton('create', 'Register')
@@ -75,15 +75,15 @@ server <- function(input, output, session) {
   observeEvent(input$signin_modal, {
     showModal(
       modalDialog(
-        title = 'Sign in ',
-        textInput('email_signin', 'Your email', width = '100%'),
-        passwordInput('password_signin', 'Your password', width = '100%'),
-        actionLink(inputId = 'forgot_pw', label = 'Forgot password?'),
+        title = 'Sign In ',
+        textInput('email_signin', 'Email', width = '100%'),
+        passwordInput('password_signin', 'Password', width = '100%'),
+        actionLink(inputId = 'forgot_pw', label = 'Forgot Password?'),
         footer = tagList(
-          actionButton('cancel_signin', 'Cancel'),
+          modalButton('Cancel'),
           tooltip(
-            actionButton('sign_in', 'Sign in'), 
-            'If this window does not close after clicking, check your login info.', 
+            actionButton('sign_in', 'Sign In'), 
+            'If this window does not close after clicking, check your login info or reset your password.', 
             placement = 'top'
           )
         ),
@@ -92,24 +92,24 @@ server <- function(input, output, session) {
   })
   
   observeEvent(input$forgot_pw, {
+    removeModal()
     showModal(
       modalDialog(
-        title = 'Reset password',
-        textInput('email_reset', 'Your email', width = '100%'),
+        title = 'Reset Password',
+        textInput('email_reset', 'Email', width = '100%'),
         footer = tagList(
           modalButton('Cancel'),
-          actionButton('reset_pw', 'Send reset link')
+          actionButton('reset_pw', 'Send Reset Link')
         ),
         easyClose = FALSE
       ))
   })
   
-  observeEvent(input$cancel_signin, {
-    removeModal()
-  })
-  
   ## create user ----
   observeEvent(input$create, {
+    req(input$email_create)
+    req(input$password_create)
+    req(input$password_confirm)
     if (input$password_create == input$password_confirm) {
       f$create(input$email_create, input$password_create)
     } else {
@@ -156,6 +156,8 @@ server <- function(input, output, session) {
   
   ## sign in/out ----
   observeEvent(input$sign_in, {
+    req(input$email_signin)
+    req(input$password_signin)
     f$sign_in(input$email_signin, input$password_signin)
   })
   
@@ -212,6 +214,7 @@ server <- function(input, output, session) {
   
   #### reset password ----
   observeEvent(input$reset_pw, {
+    req(input$email_reset)
     f$reset_password(input$email_reset)
   })
   

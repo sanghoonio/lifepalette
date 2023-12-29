@@ -34,7 +34,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .tooltip.show.fade {
-  transition-delay: 0.8s !important;
+  transition-delay: 1s !important;
 }
 
 .custom_dropdown {
