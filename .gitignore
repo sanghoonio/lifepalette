@@ -7,3 +7,5 @@ data/db.sqlite
 .Rhistory
 .RData
 .Ruserdata
+
+app_cache/

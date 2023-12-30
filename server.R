@@ -36,14 +36,14 @@ server <- function(input, output, session) {
   ### used for rendering colors
   render_colors <- reactiveVal(
     data.frame(matrix(nrow = 52*91, ncol = 0)) %>% mutate(
-      default = rep('black', 52*91),
+      default = c('orange', rep('black', (52*91)-1))
     )
   )
   
   ### used for keeping temp data for default and newly created user
   default_colors <- reactiveVal(
     data.frame(matrix(nrow = 52*91, ncol = 0)) %>% mutate(
-      default = rep('black', 52*91),
+      default = c('orange', rep('black', (52*91)-1))
     )
   )
   
