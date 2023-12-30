@@ -34,7 +34,7 @@ ui <- fluidPage(
         style = 'float:right; padding:6px 12px; margin:5px 5px 0 0;',
         `data-bs-toggle` = 'dropdown',
         `aria-expanded` = 'false',
-        icon('bars')
+        icon('circle-user')
       ),
       
       tags$ul(
