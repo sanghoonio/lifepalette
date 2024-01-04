@@ -55,7 +55,7 @@ server <- function(input, output, session) {
   )
   
   ## auth ----
-  f <- FirebaseEmailPassword$new(config_path = 'data/firebase.rds')
+  f <- FirebaseEmailPassword$new(config_path = 'data/firebase.rds', persistence = 'local')
   
   observeEvent(input$register_modal, {
     showModal(
@@ -164,6 +164,8 @@ server <- function(input, output, session) {
   observeEvent(input$sign_out, {
     f$sign_out()
     current_user('default')
+    shinyjs::show(id = 'signin_text')
+    shinyjs::hide(id = 'signin_icon')
     
     render_colors(default_colors())
     
@@ -209,6 +211,8 @@ server <- function(input, output, session) {
       showNotification('Signed in.', duration = 3, type = 'message')
     }
     
+    shinyjs::hide(id = 'signin_text')
+    shinyjs::show(id = 'signin_icon')
     current_user(user)
   })
   
