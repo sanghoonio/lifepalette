@@ -171,7 +171,8 @@ server <- function(input, output, session) {
     
     today <- input$local_date %>% as.Date()
     freezeReactiveValue(input, 'dob')
-    js$updateDOBInputs(as.numeric(format(today, '%Y')), as.numeric(format(today, '%m')), as.numeric(format(today, '%d')))
+    
+    session$sendCustomMessage('updateDOBInputs', list(as.numeric(format(today, '%Y')), as.numeric(format(today, '%m')), as.numeric(format(today, '%d'))))
   })
   
   ### current user ----
@@ -206,7 +207,8 @@ server <- function(input, output, session) {
       
       user_dob <- get_data(where = user, index_column = 'user', tbl_column = 'dob', db_table = 'user_list')[1, 1] %>% as.Date(format = '%Y-%m-%d')
       freezeReactiveValue(input, 'dob')
-      js$updateDOBInputs(as.numeric(format(user_dob, '%Y')), as.numeric(format(user_dob, '%m')), as.numeric(format(user_dob, '%d')))
+      
+      session$sendCustomMessage('updateDOBInputs', list(as.numeric(format(user_dob, '%Y')), as.numeric(format(user_dob, '%m')), as.numeric(format(user_dob, '%d'))))
       
       showNotification('Signed in.', duration = 3, type = 'message')
     }
@@ -290,7 +292,7 @@ server <- function(input, output, session) {
     box_classes <- lapply(1:(52*91), function(week) {
       ifelse((week <= weeks_diff), paste0('grid_item filled ', render_colors()[week, 1]), 'grid_item')
     })
-    js$fillBoxes(box_classes)
+    session$sendCustomMessage('fillBoxes', box_classes)
   }, ignoreInit = TRUE)
   
   ### show modal ----
@@ -377,7 +379,7 @@ server <- function(input, output, session) {
     }
     
     box_class <- paste0('grid_item filled ', render_colors()[selected_week, 1])
-    js$fillBox(box_class, selected_week)
+    session$sendCustomMessage('fillBox', list(box_class, selected_week))
   })
   
 }

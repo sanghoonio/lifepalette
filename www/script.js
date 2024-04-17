@@ -12,11 +12,8 @@ document.addEventListener('click', function(e) {
 });
 
 // refreshes all boxes
-shinyjs.fillBoxes = function(params) {
-  var defaultParams = {boxes : null};
-  params = shinyjs.getParams(params, defaultParams);
-  
-  const maxBox = params.boxes.length;
+Shiny.addCustomMessageHandler('fillBoxes', function(boxes) {
+  const maxBox = boxes.length;
   
   if (maxBox > 0) {
     for (let i = 1; i <= maxBox; i++) {
@@ -24,24 +21,24 @@ shinyjs.fillBoxes = function(params) {
       const boxElement = document.getElementById(boxId);
   
       if (boxElement) {
-        boxElement.className = params.boxes[i - 1];
+        boxElement.className = boxes[i - 1];
       }
     }
   }
-}
+});
 
 // refreshes one box
-shinyjs.fillBox = function(params) {
-  var defaultParams = {box : null, index : null};
-  params = shinyjs.getParams(params, defaultParams);
+Shiny.addCustomMessageHandler('fillBox', function(params) {
+  const box = params[0];
+  const index = params[1];
   
-  const boxId = 'week_' + ('0000'+params.index).slice(-4);
+  const boxId = 'week_' + ('0000'+index).slice(-4);
   const boxElement = document.getElementById(boxId);
 
   if (boxElement) {
-    boxElement.className = params.box;
+    boxElement.className = box;
   }
-}
+});
 
 // sets up shiny date input
 document.addEventListener('DOMContentLoaded', function () {
@@ -61,24 +58,25 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 // update date inputs from server
-shinyjs.updateDOBInputs = function(params) {
-  var defaultParams = {year : null, month : null, day : null};
-  params = shinyjs.getParams(params, defaultParams);
+Shiny.addCustomMessageHandler('updateDOBInputs', function(params) {
+  const year = params[0];
+  const month = params[1];
+  const day = params[2];
   
   let selectYear = document.getElementById('year_input');
   let selectMonth = document.getElementById('month_input');
   let selectDay = document.getElementById('day_input');
   
-  selectYear.value = params.year
-  selectMonth.value = params.month - 1
-  selectDay.value = params.day
+  selectYear.value = year
+  selectMonth.value = month - 1
+  selectDay.value = day
   
   var selectedYear = selectYear.value;
   var selectedMonth = parseInt(selectMonth.value) + 1;
   var selectedDay = selectDay.value;
 
   Shiny.setInputValue('dob', (selectedYear + '-' + ('00'+selectedMonth).slice(-2) + '-' + ('00'+selectedDay).slice(-2)));
-}
+});
 
 // sets up date inputs
 document.addEventListener('DOMContentLoaded', function () {
