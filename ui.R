@@ -24,7 +24,6 @@ ui <- bootstrapPage(
   
   div(
     class = 'container-fluid',
-    
     div(
       class = 'row',
       
