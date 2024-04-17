@@ -3,12 +3,9 @@ library(shinyjs)
 library(bslib)
 library(tidyverse)
 
-library(firebase)
-
 ui <- fluidPage(
   
   useShinyjs(),
-  useFirebase(),
   theme = bs_theme(version = 5),
   
   extendShinyjs(script = 'script.js', functions = c('fillBoxes', 'fillBox', 'updateDOBInputs')),
@@ -29,24 +26,12 @@ ui <- fluidPage(
     ## dropdown ----
     div(
       style = 'height:48px;',
-      tags$button(
+      shinyjs::disabled(tags$button(
         class = 'btn btn_settings',
-        style = 'float:right; padding:6px 12px; margin:5px 5px 0 0;',
-        `data-bs-toggle` = 'dropdown',
-        `aria-expanded` = 'false',
-        hidden(icon(id = 'signin_icon', 'circle-user')),
+        style = 'float:right; padding:6px 12px; margin:5px 5px 0 0; border:none;',
         span(id = 'signin_text', 'Sign In')
-      ),
-      
-      tags$ul(
-        class = 'dropdown-menu custom_dropdown',
-        style = 'width:275px;',
-        `aria-labeled-by` = 'settings_dropdown',
-        
-        uiOutput(outputId = 'user'),
-        div(id = 'login_div')      
       )
-    )
+    ))
   ),
   
   div(
