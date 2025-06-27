@@ -1,6 +1,6 @@
 ## LifePalette: a life visualization tool
 
-[lifepalette](https://sanghoon.io/lifepalette)
+[lifepalette](https://sanghoon.io/shiny/lifepalette)
 
 The average lifespan spans across roughly 4000 weeks. How far are you along your journey?
 
